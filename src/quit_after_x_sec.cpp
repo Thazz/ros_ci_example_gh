@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     rate.sleep();
   }
 
-  ROS_INFO("End")
+  ROS_INFO("End");
 
   ros::shutdown();
   return 0;
