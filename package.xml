@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ros_ci_example_bb</name>
+  <version>0.0.1</version>
+  <description>Example ROS package to use CI</description>
+
+  <maintainer email="gregor.seljak@gmail.com">Gregor Seljak</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+  </export>
+</package>

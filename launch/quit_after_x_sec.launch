@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="duration" default="10"/>
+    <arg name="out" default="screen"/>
+
+    <node pkg="ros_ci_example_bb" type="quit_after_x_sec" name="quit_after_x_sec" output="$(arg out)">
+        <param name="duration" value="$(arg duration)" />
+    </node>
+</launch>
