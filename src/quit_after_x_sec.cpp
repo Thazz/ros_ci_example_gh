@@ -39,44 +39,87 @@
  */
 
 #include <ros/ros.h>
+#include <actionlib/server/simple_action_server.h>
+#include <ros_ci_example_gh/QuitAction.h>
+
+class Quit
+{
+protected:
+  ros::NodeHandle nh_;
+  ros::NodeHandle private_nh_;
+  actionlib::SimpleActionServer<ros_ci_example_gh::QuitAction> as_;
+  std::string action_name_;
+  int warn_remaining_;
+
+  ros_ci_example_gh::QuitFeedback feedback_;
+  ros_ci_example_gh::QuitResult result_;
+
+public:
+  Quit(ros::NodeHandle& nh, const std::string& name)
+    : nh_(nh)
+    , private_nh_("~")
+    , as_(nh_, name, boost::bind(&Quit::executeCallback, this, _1), false)
+    , action_name_(name)
+  {
+    private_nh_.param<int>("warn_remaining", warn_remaining_, 10);
+    as_.start();
+  }
+
+  ~Quit()
+  {
+  }
+
+  void executeCallback(const ros_ci_example_gh::QuitGoalConstPtr& goal)
+  {
+    ROS_INFO_STREAM(action_name_ << " started");
+
+    feedback_.remaining = goal->duration;
+    result_.result = -1;
+
+    // start executing the action
+    ros::Time t_start = ros::Time::now();
+    ros::Time t_current = ros::Time::now();
+    double elapsed = (t_start - t_current).toSec();
+    ros::Rate rate(10);
+    bool success = true;
+
+    ROS_DEBUG_STREAM("Start time: " << t_start);
+
+    while (ros::ok() && elapsed <= goal->duration)
+    {
+      t_current = ros::Time::now();
+      elapsed = (t_current - t_start).toSec();
+
+      int remaining = static_cast<int>(goal->duration - elapsed);
+      feedback_.remaining = remaining;
+      ROS_INFO_STREAM_THROTTLE(1, remaining << " seconds remaining ...");
+
+      if (remaining < warn_remaining_)
+      {
+        ROS_WARN_ONCE("Almost out of time!");
+      }
+
+      ros::spinOnce();
+      rate.sleep();
+    }
+
+    if (success)
+    {
+      result_.result = 0;
+      ROS_INFO_STREAM(action_name_ << " succeeded");
+    }
+
+    as_.setSucceeded(result_);
+  }
+};
 
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "quit_after_x_sec");
   ros::NodeHandle nh;
-  ros::NodeHandle private_nh("~");
 
-  double duration = 0;
-  private_nh.param<double>("duration", duration, 10);
+  Quit qa(nh, "quit_action");
+  ros::spin();
 
-  ROS_INFO("Start");
-  ROS_INFO_STREAM("Program will exit after " << duration << " seconds");
-
-  ros::Time t_start = ros::Time::now();
-  ros::Time t_current = ros::Time::now();
-  double elapsed = (t_start - t_current).toSec();
-  ros::Rate rate(10);
-
-  ROS_DEBUG_STREAM("Start time: " << t_start);
-
-  while (ros::ok() && elapsed <= duration)
-  {
-    t_current = ros::Time::now();
-    elapsed = (t_current - t_start).toSec();
-    int remaining = static_cast<int>(duration - elapsed);
-    ROS_INFO_STREAM_THROTTLE(1, remaining << " seconds remaining ...");
-
-    if (remaining < 5)
-    {
-      ROS_WARN_ONCE("Almost out of time!");
-    }
-
-    ros::spinOnce();
-    rate.sleep();
-  }
-
-  ROS_INFO("End");
-
-  ros::shutdown();
   return 0;
 }

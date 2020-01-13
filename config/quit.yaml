@@ -1,0 +1,2 @@
+quit_after_x_sec:
+  - warn_remaining: 5
